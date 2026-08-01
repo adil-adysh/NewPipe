@@ -5,6 +5,8 @@ import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.core.view.ViewCompat;
+
 import org.schabi.newpipe.util.Localization;
 import org.schabi.newpipe.util.ServiceHelper;
 import org.schabi.newpipe.util.image.CoilHelper;
@@ -27,13 +29,29 @@ public class PlayQueueItemBuilder {
         holder.itemAdditionalDetailsView.setText(Localization.concatenateStrings(item.getUploader(),
                 ServiceHelper.getNameOfServiceById(item.getServiceId())));
 
+        String duration = "";
         if (item.getDuration() > 0) {
-            holder.itemDurationView.setText(Localization.getDurationString(item.getDuration()));
+            duration = Localization.getDurationString(item.getDuration());
+            holder.itemDurationView.setText(duration);
+            holder.itemDurationView.setVisibility(View.VISIBLE);
         } else {
             holder.itemDurationView.setVisibility(View.GONE);
         }
 
         CoilHelper.INSTANCE.loadThumbnail(holder.itemThumbnailView, item.getThumbnails());
+        ViewCompat.setImportantForAccessibility(holder.itemThumbnailView,
+                ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        ViewCompat.setImportantForAccessibility(holder.itemVideoTitleView,
+                ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        ViewCompat.setImportantForAccessibility(holder.itemAdditionalDetailsView,
+                ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        ViewCompat.setImportantForAccessibility(holder.itemDurationView,
+                ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        ViewCompat.setImportantForAccessibility(holder.itemHandle,
+                ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        holder.itemRoot.setContentDescription(Localization.concatenateStrings(item.getTitle(),
+                item.getUploader(), ServiceHelper.getNameOfServiceById(item.getServiceId()),
+                duration));
 
         holder.itemRoot.setOnClickListener(view -> {
             if (onItemClickListener != null) {

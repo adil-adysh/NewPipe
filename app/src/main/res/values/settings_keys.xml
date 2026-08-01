@@ -28,6 +28,24 @@
     <string name="clear_queue_confirmation_key">clear_queue_confirmation_key</string>
     <string name="ignore_hardware_media_buttons_key">ignore_hardware_media_buttons_key</string>
 
+    <string name="player_never_hide_controls_key">player_never_hide_controls</string>
+    <string name="player_controls_hide_duration_key">player_controls_hide_duration</string>
+    <string name="player_controls_hide_duration_default">2000</string>
+    <string-array name="player_controls_hide_duration_values">
+        <item>1000</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>5000</item>
+        <item>7000</item>
+    </string-array>
+    <string-array name="player_controls_hide_duration_descriptions">
+        <item>1 second</item>
+        <item>2 seconds</item>
+        <item>3 seconds</item>
+        <item>5 seconds</item>
+        <item>7 seconds</item>
+    </string-array>
+
     <string name="popup_saved_width_key">popup_saved_width</string>
     <string name="popup_saved_x_key">popup_saved_x</string>
     <string name="popup_saved_y_key">popup_saved_y</string>
