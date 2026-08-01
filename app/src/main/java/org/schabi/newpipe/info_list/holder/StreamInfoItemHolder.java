@@ -4,6 +4,8 @@ import android.text.TextUtils;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.core.view.ViewCompat;
+
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
@@ -47,6 +49,8 @@ public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
                                 final ViewGroup parent) {
         super(infoItemBuilder, layoutId, parent);
         itemAdditionalDetails = itemView.findViewById(R.id.itemAdditionalDetails);
+        ViewCompat.setImportantForAccessibility(itemAdditionalDetails,
+                ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
     @Override
@@ -59,7 +63,11 @@ public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
         }
         final StreamInfoItem item = (StreamInfoItem) infoItem;
 
-        itemAdditionalDetails.setText(getStreamInfoDetailLine(item));
+        final String detailLine = getStreamInfoDetailLine(item);
+        itemAdditionalDetails.setText(detailLine);
+        itemView.setContentDescription(Localization.concatenateStrings(
+                item.getName(), item.getUploaderName(), detailLine,
+                itemDurationView.getText().toString()));
     }
 
     private String getStreamInfoDetailLine(final StreamInfoItem infoItem) {

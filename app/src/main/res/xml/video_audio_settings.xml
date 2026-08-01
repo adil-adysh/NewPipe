@@ -249,5 +249,23 @@
             android:title="@string/ignore_hardware_media_buttons_title"
             app:singleLineTitle="false"
             app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="@string/player_never_hide_controls_key"
+            android:summary="@string/player_never_hide_controls_summary"
+            android:title="@string/player_never_hide_controls_title"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="false" />
+
+        <ListPreference
+            android:defaultValue="@string/player_controls_hide_duration_default"
+            android:entries="@array/player_controls_hide_duration_descriptions"
+            android:entryValues="@array/player_controls_hide_duration_values"
+            android:key="@string/player_controls_hide_duration_key"
+            android:title="@string/player_controls_hide_duration_title"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 </PreferenceScreen>

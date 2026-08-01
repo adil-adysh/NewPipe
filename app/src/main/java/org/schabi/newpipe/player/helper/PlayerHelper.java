@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.provider.Settings;
+import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.CaptioningManager;
 
 import androidx.annotation.IntDef;
@@ -465,6 +466,37 @@ public final class PlayerHelper {
         return Integer.parseInt(Objects.requireNonNull(player.getPrefs().getString(
                 player.getContext().getString(R.string.seek_duration_key),
                 player.getContext().getString(R.string.seek_duration_default_value))));
+    }
+
+    /**
+     * @param context the context used to access shared preferences
+     * @return true if the user has enabled "never hide player controls" in settings
+     */
+    public static boolean isNeverHidePlayerControls(@NonNull final Context context) {
+        return getPreferences(context)
+                .getBoolean(context.getString(R.string.player_never_hide_controls_key), false);
+    }
+
+    public static boolean isTouchExplorationEnabled(@NonNull final Context context) {
+        final AccessibilityManager accessibilityManager = ContextCompat.getSystemService(context,
+                AccessibilityManager.class);
+        return accessibilityManager != null
+                && accessibilityManager.isEnabled()
+                && accessibilityManager.isTouchExplorationEnabled();
+    }
+
+    public static boolean shouldKeepPlayerControlsVisible(@NonNull final Context context) {
+        return isNeverHidePlayerControls(context) || isTouchExplorationEnabled(context);
+    }
+
+    /**
+     * @param context the context used to access shared preferences
+     * @return the configured auto-hide delay for player controls, in milliseconds
+     */
+    public static long getPlayerControlsHideDurationMs(@NonNull final Context context) {
+        return Long.parseLong(Objects.requireNonNull(getPreferences(context)
+                .getString(context.getString(R.string.player_controls_hide_duration_key),
+                        context.getString(R.string.player_controls_hide_duration_default))));
     }
 
     // endregion
