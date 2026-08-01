@@ -67,6 +67,11 @@
     <string name="notification_actions_at_most_three">You can select at most three actions to show in the compact notification!</string>
     <string name="notification_action_repeat">Repeat</string>
     <string name="notification_action_shuffle">Shuffle</string>
+    <string name="repeat_mode_off">Repeat off</string>
+    <string name="repeat_mode_one">Repeat one</string>
+    <string name="repeat_mode_all">Repeat all</string>
+    <string name="shuffle_off">Shuffle off</string>
+    <string name="shuffle_on">Shuffle on</string>
     <string name="notification_action_buffering">Buffering</string>
     <string name="notification_action_nothing">Nothing</string>
     <string name="notification_colorize_title">Colorize notification</string>
@@ -151,6 +156,9 @@
     <string name="peertube_instance_add_exists">Instance already exists</string>
     <string name="settings_category_player_title">Player</string>
     <string name="settings_category_player_behavior_title">Behavior</string>
+    <string name="player_never_hide_controls_title">Never hide player controls</string>
+    <string name="player_never_hide_controls_summary">Keep video player controls always visible (recommended for screen reader accessibility)</string>
+    <string name="player_controls_hide_duration_title">Controls hide delay</string>
     <string name="settings_category_video_audio_title">Video and audio</string>
     <string name="settings_category_history_title">History and cache</string>
     <string name="settings_category_appearance_title">Appearance</string>

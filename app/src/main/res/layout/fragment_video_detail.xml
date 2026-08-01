@@ -43,6 +43,7 @@
                         android:layout_height="wrap_content"
                         android:background="?windowBackground"
                         android:contentDescription="@string/detail_thumbnail_view_description"
+                        android:importantForAccessibility="no"
                         android:minHeight="200dp"
                         android:scaleType="fitCenter"
                         tools:ignore="RtlHardcoded"
@@ -57,6 +58,7 @@
                         android:layout_gravity="center"
                         android:background="@android:color/transparent"
                         android:src="@drawable/ic_play_arrow_shadow"
+                        android:importantForAccessibility="no"
                         android:visibility="invisible"
                         tools:visibility="visible" />
 
@@ -98,6 +100,7 @@
                         android:textColor="@android:color/white"
                         android:textSize="12sp"
                         android:textStyle="bold"
+                        android:importantForAccessibility="no"
                         android:visibility="gone"
                         tools:ignore="RtlHardcoded"
                         tools:text="12:38"
@@ -123,6 +126,7 @@
                         android:textColor="@android:color/white"
                         android:textSize="12sp"
                         android:textStyle="bold"
+                        android:importantForAccessibility="no"
                         android:visibility="gone"
                         tools:ignore="RtlHardcoded"
                         tools:text="12:38"
@@ -135,6 +139,7 @@
                         android:layout_height="2dp"
                         android:layout_gravity="bottom"
                         android:progressDrawable="?attr/progress_horizontal_drawable"
+                        android:importantForAccessibility="no"
                         android:visibility="invisible"
                         tools:max="100"
                         tools:progress="40"
@@ -176,6 +181,7 @@
                         android:maxLines="1"
                         android:paddingTop="12dp"
                         android:paddingBottom="8dp"
+                        android:importantForAccessibility="no"
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:textSize="@dimen/video_item_detail_title_text_size"
                         tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit sed a ultricies ex. Integer sit amet sodales risus. Duis non mi et urna pretium bibendum. Nunc eleifend est quis ipsum porttitor egestas. Sed facilisis, nisl quis eleifend pellentesque, orci metus egestas dolor, at accumsan eros metus quis libero." />
@@ -188,6 +194,7 @@
                         android:layout_marginTop="11dp"
                         android:layout_marginEnd="10dp"
                         android:src="@drawable/ic_expand_more"
+                        android:importantForAccessibility="no"
                         tools:ignore="ContentDescription" />
 
                 </FrameLayout>
@@ -258,6 +265,7 @@
                                     android:layout_width="@dimen/video_item_detail_uploader_image_size"
                                     android:layout_height="@dimen/video_item_detail_uploader_image_size"
                                     android:contentDescription="@string/detail_sub_channel_thumbnail_view_description"
+                                    android:importantForAccessibility="no"
                                     android:src="@drawable/placeholder_person"
                                     app:shapeAppearance="@style/CircularImageView" />
 
@@ -267,6 +275,7 @@
                                     android:layout_height="@dimen/video_item_detail_sub_channel_image_size"
                                     android:layout_gravity="bottom|right"
                                     android:contentDescription="@string/detail_uploader_thumbnail_view_description"
+                                    android:importantForAccessibility="no"
                                     android:src="@drawable/placeholder_person"
                                     app:shapeAppearance="@style/CircularImageView"
                                     tools:ignore="RtlHardcoded" />
@@ -289,6 +298,7 @@
                                     android:marqueeRepeatLimit="marquee_forever"
                                     android:scrollHorizontally="true"
                                     android:singleLine="true"
+                                    android:importantForAccessibility="no"
                                     android:textAppearance="?android:attr/textAppearanceLarge"
                                     android:textSize="@dimen/video_item_detail_sub_channel_text_size"
                                     android:textStyle="normal|bold"
@@ -304,6 +314,7 @@
                                     android:marqueeRepeatLimit="marquee_forever"
                                     android:scrollHorizontally="true"
                                     android:singleLine="true"
+                                    android:importantForAccessibility="no"
                                     android:textSize="@dimen/video_item_detail_uploader_text_size"
                                     tools:ignore="RtlHardcoded"
                                     tools:text="Uploader" />
@@ -329,6 +340,7 @@
                                 android:layout_marginTop="6dp"
                                 android:layout_marginBottom="6dp"
                                 android:lines="1"
+                                android:importantForAccessibility="no"
                                 android:textAppearance="?android:attr/textAppearanceLarge"
                                 android:textSize="@dimen/video_item_detail_views_text_size"
                                 tools:ignore="RtlHardcoded"
@@ -340,6 +352,7 @@
                                 android:layout_height="@dimen/video_item_detail_like_image_height"
                                 android:layout_below="@id/detail_view_count_view"
                                 android:contentDescription="@string/detail_likes_img_view_description"
+                                android:importantForAccessibility="no"
                                 android:src="@drawable/ic_thumb_up" />
 
                             <org.schabi.newpipe.views.NewPipeTextView
@@ -350,6 +363,7 @@
                                 android:layout_marginLeft="@dimen/video_item_detail_like_margin"
                                 android:layout_toRightOf="@id/detail_thumbs_up_img_view"
                                 android:gravity="center_vertical"
+                                android:importantForAccessibility="no"
                                 android:lines="1"
                                 android:textAppearance="?android:attr/textAppearanceMedium"
                                 android:textSize="@dimen/video_item_detail_likes_text_size"
@@ -364,6 +378,7 @@
                                 android:layout_marginLeft="12dp"
                                 android:layout_toRightOf="@id/detail_thumbs_up_count_view"
                                 android:contentDescription="@string/detail_dislikes_img_view_description"
+                                android:importantForAccessibility="no"
                                 android:src="@drawable/ic_thumb_down"
                                 tools:ignore="RtlHardcoded" />
 
@@ -375,6 +390,7 @@
                                 android:layout_marginLeft="@dimen/video_item_detail_like_margin"
                                 android:layout_toRightOf="@id/detail_thumbs_down_img_view"
                                 android:gravity="center_vertical"
+                                android:importantForAccessibility="no"
                                 android:lines="1"
                                 android:textAppearance="?android:attr/textAppearanceMedium"
                                 android:textSize="@dimen/video_item_detail_likes_text_size"
@@ -389,6 +405,7 @@
                                 android:layout_marginLeft="12dp"
                                 android:layout_toRightOf="@id/detail_thumbs_down_img_view"
                                 android:gravity="center_vertical"
+                                android:importantForAccessibility="no"
                                 android:text="@string/disabled"
                                 android:textAppearance="?android:attr/textAppearanceLarge"
                                 android:textSize="@dimen/video_item_detail_likes_text_size"
@@ -615,6 +632,7 @@
             android:paddingLeft="@dimen/video_item_search_padding"
             android:paddingRight="@dimen/video_item_search_padding"
             android:scaleType="fitCenter"
+            android:importantForAccessibility="no"
             tools:ignore="ContentDescription" />
 
         <LinearLayout
@@ -639,6 +657,7 @@
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
                 android:singleLine="true"
+                android:importantForAccessibility="no"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:textSize="@dimen/video_item_search_title_text_size"
                 tools:ignore="RtlHardcoded"
@@ -653,6 +672,7 @@
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
                 android:singleLine="true"
+                android:importantForAccessibility="no"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textSize="@dimen/video_item_search_uploader_text_size"
                 tools:text="The Video Artist  LONG very LONG very Long" />

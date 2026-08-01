@@ -12,21 +12,24 @@
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true" />
+        android:layout_centerInParent="true"
+        android:importantForAccessibility="no" />
 
     <View
         android:id="@+id/surfaceForeground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignBottom="@+id/surfaceView"
-        android:background="@android:color/black" />
+        android:background="@android:color/black"
+        android:importantForAccessibility="no" />
 
     <com.google.android.exoplayer2.ui.SubtitleView
         android:id="@+id/subtitleView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        android:importantForAccessibility="no" />
 
     <View
         android:id="@+id/playerTopShadow"
@@ -34,6 +37,7 @@
         android:layout_height="30dp"
         android:layout_alignParentTop="true"
         android:background="@drawable/player_controls_top_background"
+        android:importantForAccessibility="no"
         android:visibility="gone" />
 
     <View
@@ -42,6 +46,7 @@
         android:layout_height="30dp"
         android:layout_alignParentBottom="true"
         android:background="@drawable/player_controls_background"
+        android:importantForAccessibility="no"
         android:visibility="gone" />
 
     <ImageView
@@ -49,6 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
+        android:importantForAccessibility="no"
         android:visibility="gone"
         tools:background="@android:color/white"
         tools:ignore="ContentDescription"
@@ -60,6 +66,7 @@
         android:layout_height="match_parent"
         android:layout_alignBottom="@+id/playbackControlRoot"
         android:background="@color/video_overlay_color"
+        android:importantForAccessibility="no"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -131,6 +138,7 @@
                             android:layout_marginTop="6dp"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
+                            android:focusable="true"
                             android:gravity="top"
                             android:orientation="vertical"
                             tools:ignore="NestedWeights,RtlHardcoded">
@@ -141,6 +149,7 @@
                                 android:layout_height="wrap_content"
                                 android:ellipsize="marquee"
                                 android:fadingEdge="horizontal"
+                                android:importantForAccessibility="no"
                                 android:marqueeRepeatLimit="marquee_forever"
                                 android:scrollHorizontally="true"
                                 android:singleLine="true"
@@ -156,6 +165,7 @@
                                 android:layout_height="wrap_content"
                                 android:ellipsize="marquee"
                                 android:fadingEdge="horizontal"
+                                android:importantForAccessibility="no"
                                 android:marqueeRepeatLimit="marquee_forever"
                                 android:scrollHorizontally="true"
                                 android:singleLine="true"
@@ -439,6 +449,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="#60000000"
+                        android:importantForAccessibility="no"
                         android:paddingLeft="5dp"
                         android:paddingRight="5dp"
                         android:paddingBottom="2dp"
@@ -454,6 +465,7 @@
                         android:id="@+id/currentSeekbarPreviewThumbnail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:importantForAccessibility="no"
                         android:paddingTop="2dp"
                         android:src="@drawable/placeholder_thumbnail_video"
                         android:visibility="gone"
@@ -480,6 +492,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
+                    android:importantForAccessibility="no"
                     android:minHeight="30dp"
                     android:text="-:--:--"
                     android:textColor="@android:color/white"
@@ -503,6 +516,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
+                    android:importantForAccessibility="no"
                     android:text="-:--:--"
                     android:textColor="@android:color/white"
                     tools:ignore="HardcodedText"
@@ -570,7 +584,9 @@
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
                 android:contentDescription="@string/pause"
+                android:focusable="true"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_pause"
                 app:tint="@color/white" />
@@ -724,6 +740,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/black"
+            android:importantForAccessibility="no"
             tools:visibility="gone">
 
             <ProgressBar
@@ -747,6 +764,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:background="@drawable/background_oval_black_transparent"
+                android:importantForAccessibility="no"
                 android:visibility="gone"
                 tools:visibility="visible">
 
@@ -774,6 +792,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:background="@drawable/background_oval_black_transparent"
+                android:importantForAccessibility="no"
                 android:visibility="gone"
                 tools:visibility="visible">
 
@@ -804,6 +823,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#AAFF0000"
+        android:importantForAccessibility="no"
         android:visibility="gone" />
 
     <Button
@@ -816,6 +836,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true"
+        android:importantForAccessibility="no"
         android:text="@string/close"
         android:textAllCaps="true"
         android:textColor="@color/white"
@@ -826,6 +847,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:alpha="0"
+        android:importantForAccessibility="no"
         android:visibility="invisible" /> <!-- Required for the first appearance fading correctly -->
 
 </RelativeLayout>

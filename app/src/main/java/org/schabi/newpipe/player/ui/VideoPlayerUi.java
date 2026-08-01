@@ -15,7 +15,9 @@ import static org.schabi.newpipe.player.helper.PlayerHelper.formatSpeed;
 import static org.schabi.newpipe.player.helper.PlayerHelper.getTimeString;
 import static org.schabi.newpipe.player.helper.PlayerHelper.nextResizeModeAndSaveToPrefs;
 import static org.schabi.newpipe.player.helper.PlayerHelper.retrieveSeekDurationFromPreferences;
+import static org.schabi.newpipe.player.helper.PlayerHelper.shouldKeepPlayerControlsVisible;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -33,6 +35,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -119,6 +122,11 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
     private final Handler controlsVisibilityHandler = new Handler(Looper.getMainLooper());
     @Nullable
     private SurfaceHolderCallback surfaceHolderCallback;
+    @Nullable
+    private AccessibilityManager accessibilityManager;
+    @Nullable
+    private AccessibilityManager.TouchExplorationStateChangeListener
+            touchExplorationStateChangeListener;
     boolean surfaceIsSetup = false;
 
 
@@ -255,6 +263,9 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         ));
         binding.switchMute.setOnClickListener(makeOnClickListener(player::toggleMute));
 
+        setupAccessibilityTraversal();
+        setupTouchExplorationListener();
+
         ViewCompat.setOnApplyWindowInsetsListener(binding.itemsListPanel, (view, windowInsets) -> {
             final Insets cutout = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
             if (!cutout.equals(Insets.NONE)) {
@@ -315,6 +326,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         binding.playerCloseButton.setOnClickListener(null);
         binding.switchMute.setOnClickListener(null);
 
+        clearTouchExplorationListener();
         ViewCompat.setOnApplyWindowInsetsListener(binding.itemsListPanel, null);
 
         binding.playbackControlRoot.removeOnLayoutChangeListener(onLayoutChangeListener);
@@ -588,6 +600,22 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
                     + "seekBar = [" + seekBar + "], progress = [" + progress + "]");
         }
 
+        // Accessibility services (e.g. TalkBack) adjust the seekbar via the
+        // AccessibilityNodeInfo.ACTION_SET_PROGRESS / ACTION_SCROLL_FORWARD / BACKWARD actions.
+        // The framework handles these by firing onProgressChanged(fromUser = true) without ever
+        // calling onStartTrackingTouch()/onStopTrackingTouch() (see
+        // android.widget.AbsSeekBar#performAccessibilityActionInternal), so a seek would
+        // otherwise never be committed to the player for accessibility input. STATE_PAUSED_SEEK
+        // is used here as the discriminator for "a tracking session is in progress":
+        // - Touch dragging and keyboard/DPAD seeking both enter STATE_PAUSED_SEEK via
+        //   onStartTrackingTouch() before any onProgressChanged() fires, so the existing
+        //   "seek on release" behavior (see onStopTrackingTouch()) is preserved.
+        // - Accessibility adjustments never enter STATE_PAUSED_SEEK (no tracking callbacks are
+        //   fired), so the seek must be committed here, immediately.
+        if (player.getCurrentState() != STATE_PAUSED_SEEK) {
+            player.seekTo(progress);
+        }
+
         binding.currentDisplaySeek.setText(getTimeString(progress));
 
         // Seekbar Preview Thumbnail
@@ -725,30 +753,110 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         return binding != null && binding.playbackControlRoot.getVisibility() == View.VISIBLE;
     }
 
+    /**
+     * Sets the accessibility traversal order for the player controls so that a screen reader
+     * navigates them in a logical sequence: metadata → transport controls → seekbar → secondary.
+     */
+    private void setupAccessibilityTraversal() {
+        // Logical traversal order:
+        // metadataView → playPauseButton → playPreviousButton → playNextButton →
+        // playbackSeekBar → playbackLiveSync → screenRotationButton →
+        // qualityTextView → playbackSpeed → audioTrackTextView →
+        // captionTextView → resizeTextView → switchMute →
+        // share → openInBrowser → playWithKodi →
+        // queueButton → segmentsButton → moreOptionsButton → playerCloseButton
+        binding.playPauseButton.setAccessibilityTraversalAfter(
+                binding.metadataView.getId());
+        binding.playPreviousButton.setAccessibilityTraversalAfter(
+                binding.playPauseButton.getId());
+        binding.playNextButton.setAccessibilityTraversalAfter(
+                binding.playPreviousButton.getId());
+        binding.playbackSeekBar.setAccessibilityTraversalAfter(
+                binding.playNextButton.getId());
+        binding.playbackLiveSync.setAccessibilityTraversalAfter(
+                binding.playbackSeekBar.getId());
+        binding.screenRotationButton.setAccessibilityTraversalAfter(
+                binding.playbackLiveSync.getId());
+        binding.qualityTextView.setAccessibilityTraversalAfter(
+                binding.screenRotationButton.getId());
+        binding.playbackSpeed.setAccessibilityTraversalAfter(
+                binding.qualityTextView.getId());
+        binding.audioTrackTextView.setAccessibilityTraversalAfter(
+                binding.playbackSpeed.getId());
+        binding.captionTextView.setAccessibilityTraversalAfter(
+                binding.audioTrackTextView.getId());
+        binding.resizeTextView.setAccessibilityTraversalAfter(
+                binding.captionTextView.getId());
+        binding.switchMute.setAccessibilityTraversalAfter(
+                binding.resizeTextView.getId());
+        binding.share.setAccessibilityTraversalAfter(
+                binding.switchMute.getId());
+        binding.openInBrowser.setAccessibilityTraversalAfter(
+                binding.share.getId());
+        binding.playWithKodi.setAccessibilityTraversalAfter(
+                binding.openInBrowser.getId());
+        binding.queueButton.setAccessibilityTraversalAfter(
+                binding.playWithKodi.getId());
+        binding.segmentsButton.setAccessibilityTraversalAfter(
+                binding.queueButton.getId());
+        binding.moreOptionsButton.setAccessibilityTraversalAfter(
+                binding.segmentsButton.getId());
+        binding.playerCloseButton.setAccessibilityTraversalAfter(
+                binding.moreOptionsButton.getId());
+    }
+
+    private void setupTouchExplorationListener() {
+        accessibilityManager = (AccessibilityManager) context.getSystemService(
+                Context.ACCESSIBILITY_SERVICE);
+        if (accessibilityManager == null) {
+            return;
+        }
+
+        touchExplorationStateChangeListener = enabled -> {
+            if (enabled
+                    && player.getCurrentState() != org.schabi.newpipe.player.Player.STATE_BLOCKED) {
+                showControls(DEFAULT_CONTROLS_DURATION);
+            }
+        };
+        accessibilityManager.addTouchExplorationStateChangeListener(
+                touchExplorationStateChangeListener);
+    }
+
+    private void clearTouchExplorationListener() {
+        if (accessibilityManager != null && touchExplorationStateChangeListener != null) {
+            accessibilityManager.removeTouchExplorationStateChangeListener(
+                    touchExplorationStateChangeListener);
+        }
+        touchExplorationStateChangeListener = null;
+        accessibilityManager = null;
+    }
+
     public void showControlsThenHide() {
         if (DEBUG) {
             Log.d(TAG, "showControlsThenHide() called");
         }
 
+        if (keepControlsVisibleIfNeeded(DEFAULT_CONTROLS_DURATION)) {
+            return;
+        }
+
         showOrHideButtons();
         showSystemUIPartially();
-
-        final long hideTime = binding.playbackControlRoot.isInTouchMode()
-                ? DEFAULT_CONTROLS_HIDE_TIME
-                : DPAD_CONTROLS_HIDE_TIME;
+        final long hideTime = PlayerHelper.getPlayerControlsHideDurationMs(context);
 
         showHideShadow(true, DEFAULT_CONTROLS_DURATION);
         animate(binding.playbackControlRoot, true, DEFAULT_CONTROLS_DURATION,
-                AnimationType.ALPHA, 0, () -> hideControls(DEFAULT_CONTROLS_DURATION, hideTime));
+                AnimationType.ALPHA, 0,
+                () -> hideControls(DEFAULT_CONTROLS_DURATION, hideTime));
     }
 
     public void showControls(final long duration) {
         if (DEBUG) {
             Log.d(TAG, "showControls() called");
         }
+        controlsVisibilityHandler.removeCallbacksAndMessages(null);
         showOrHideButtons();
         showSystemUIPartially();
-        controlsVisibilityHandler.removeCallbacksAndMessages(null);
         showHideShadow(true, duration);
         animate(binding.playbackControlRoot, true, duration);
     }
@@ -759,14 +867,34 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
                     + "], delay = [" + delay + "]");
         }
 
+        controlsVisibilityHandler.removeCallbacksAndMessages(null);
+        if (keepControlsVisibleIfNeeded(DEFAULT_CONTROLS_DURATION)) {
+            return;
+        }
+
         showOrHideButtons();
 
-        controlsVisibilityHandler.removeCallbacksAndMessages(null);
         controlsVisibilityHandler.postDelayed(() -> {
+            if (keepControlsVisibleIfNeeded(DEFAULT_CONTROLS_DURATION)) {
+                return;
+            }
             showHideShadow(false, duration);
             animate(binding.playbackControlRoot, false, duration, AnimationType.ALPHA,
                     0, this::hideSystemUIIfNeeded);
         }, delay);
+    }
+
+    private boolean keepControlsVisibleIfNeeded(final long duration) {
+        if (!shouldKeepPlayerControlsVisible(context)) {
+            return false;
+        }
+
+        controlsVisibilityHandler.removeCallbacksAndMessages(null);
+        showOrHideButtons();
+        showSystemUIPartially();
+        showHideShadow(true, duration);
+        animate(binding.playbackControlRoot, true, duration);
+        return true;
     }
 
     public void showHideShadow(final boolean show, final long duration) {
@@ -843,6 +971,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         super.onPrepared();
         setVideoDurationToControls((int) player.getExoPlayer().getDuration());
         binding.playbackSpeed.setText(formatSpeed(player.getPlaybackSpeed()));
+        keepControlsVisibleIfNeeded(DEFAULT_CONTROLS_DURATION);
     }
 
     @Override
@@ -870,6 +999,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         super.onPlaying();
 
         updateStreamRelatedViews();
+        keepControlsVisibleIfNeeded(DEFAULT_CONTROLS_DURATION);
 
         binding.playbackSeekBar.setEnabled(true);
         binding.playbackSeekBar.getThumb()
@@ -1079,6 +1209,11 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
 
         binding.titleTextView.setText(info.getName());
         binding.channelTextView.setText(info.getUploaderName());
+
+        // Merge title and channel into one accessibility node so the screen reader
+        // announces them together as a single informational unit.
+        binding.metadataView.setContentDescription(
+                info.getName() + ". " + info.getUploaderName());
 
         this.seekbarPreviewThumbnailHolder.resetFrom(player.getContext(), info.getPreviewFrames());
 
@@ -1513,17 +1648,25 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
             if (player.getCurrentState() == STATE_COMPLETED) {
                 return;
             }
+
+            if (shouldKeepPlayerControlsVisible(context)) {
+                showControls(DEFAULT_CONTROLS_DURATION);
+                return;
+            }
+
             controlsVisibilityHandler.removeCallbacksAndMessages(null);
             showHideShadow(true, DEFAULT_CONTROLS_DURATION);
             animate(binding.playbackControlRoot, true, DEFAULT_CONTROLS_DURATION,
                     AnimationType.ALPHA, 0, () -> {
-                        if (player.getCurrentState() == STATE_PLAYING && !isSomePopupMenuVisible) {
+                        if (player.getCurrentState() == STATE_PLAYING
+                                && !isSomePopupMenuVisible) {
                             if (v == binding.playPauseButton
                                     // Hide controls in fullscreen immediately
                                     || (v == binding.screenRotationButton && isFullscreen())) {
                                 hideControls(0, 0);
                             } else {
-                                hideControls(DEFAULT_CONTROLS_DURATION, DEFAULT_CONTROLS_HIDE_TIME);
+                                hideControls(DEFAULT_CONTROLS_DURATION,
+                                        PlayerHelper.getPlayerControlsHideDurationMs(context));
                             }
                         }
                     });
@@ -1554,7 +1697,10 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
                 }
 
                 if (isControlsVisible()) {
-                    hideControls(DEFAULT_CONTROLS_DURATION, DPAD_CONTROLS_HIDE_TIME);
+                    if (!shouldKeepPlayerControlsVisible(context)) {
+                        hideControls(DEFAULT_CONTROLS_DURATION,
+                                PlayerHelper.getPlayerControlsHideDurationMs(context));
+                    }
                 } else {
                     binding.playPauseButton.requestFocus();
                     showControlsThenHide();

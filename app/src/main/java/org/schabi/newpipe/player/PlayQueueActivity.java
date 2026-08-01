@@ -267,8 +267,12 @@ public final class PlayQueueActivity extends AppCompatActivity
     }
 
     private void buildSeekBar() {
-        queueControlBinding.seekBar.setOnSeekBarChangeListener(this);
+        getSeekBar().setOnSeekBarChangeListener(this);
         queueControlBinding.liveSync.setOnClickListener(this);
+    }
+
+    private SeekBar getSeekBar() {
+        return (SeekBar) queueControlBinding.seekBar;
     }
 
     private void buildControls() {
@@ -279,6 +283,12 @@ public final class PlayQueueActivity extends AppCompatActivity
         queueControlBinding.controlFastForward.setOnClickListener(this);
         queueControlBinding.controlForward.setOnClickListener(this);
         queueControlBinding.controlShuffle.setOnClickListener(this);
+
+        queueControlBinding.controlBackward.setContentDescription(
+                getString(R.string.previous_stream));
+        queueControlBinding.controlFastRewind.setContentDescription(getString(R.string.rewind));
+        queueControlBinding.controlFastForward.setContentDescription(getString(R.string.forward));
+        queueControlBinding.controlForward.setContentDescription(getString(R.string.next_stream));
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -462,6 +472,10 @@ public final class PlayQueueActivity extends AppCompatActivity
             final String seekTime = Localization.getDurationString(progress / 1000);
             queueControlBinding.currentTime.setText(seekTime);
             queueControlBinding.seekDisplay.setText(seekTime);
+
+            if (!seeking && player != null) {
+                player.seekTo(progress);
+            }
         }
     }
 
@@ -508,16 +522,18 @@ public final class PlayQueueActivity extends AppCompatActivity
     public void onProgressUpdate(final int currentProgress, final int duration,
                                  final int bufferPercent) {
         // Set buffer progress
-        queueControlBinding.seekBar.setSecondaryProgress((int) (queueControlBinding.seekBar.getMax()
+        final SeekBar seekBar = getSeekBar();
+
+        seekBar.setSecondaryProgress((int) (seekBar.getMax()
                 * ((float) bufferPercent / 100)));
 
         // Set Duration
-        queueControlBinding.seekBar.setMax(duration);
+        seekBar.setMax(duration);
         queueControlBinding.endTime.setText(Localization.getDurationString(duration / 1000));
 
         // Set current time if not seeking
         if (!seeking) {
-            queueControlBinding.seekBar.setProgress(currentProgress);
+            seekBar.setProgress(currentProgress);
             queueControlBinding.currentTime.setText(Localization
                     .getDurationString(currentProgress / 1000));
         }
@@ -539,6 +555,8 @@ public final class PlayQueueActivity extends AppCompatActivity
         if (info != null) {
             queueControlBinding.songName.setText(info.getName());
             queueControlBinding.artistName.setText(info.getUploaderName());
+            queueControlBinding.metadata.setContentDescription(
+                    info.getName() + ". " + info.getUploaderName());
 
             queueControlBinding.endTime.setVisibility(View.GONE);
             queueControlBinding.liveSync.setVisibility(View.GONE);
@@ -606,19 +624,28 @@ public final class PlayQueueActivity extends AppCompatActivity
             case com.google.android.exoplayer2.Player.REPEAT_MODE_OFF:
                 queueControlBinding.controlRepeat.setImageResource(
                         com.google.android.exoplayer2.ui.R.drawable.exo_controls_repeat_off);
+                queueControlBinding.controlRepeat.setContentDescription(
+                        getString(R.string.repeat_mode_off));
                 break;
             case com.google.android.exoplayer2.Player.REPEAT_MODE_ONE:
                 queueControlBinding.controlRepeat.setImageResource(
                         com.google.android.exoplayer2.ui.R.drawable.exo_controls_repeat_one);
+                queueControlBinding.controlRepeat.setContentDescription(
+                        getString(R.string.repeat_mode_one));
                 break;
             case com.google.android.exoplayer2.Player.REPEAT_MODE_ALL:
                 queueControlBinding.controlRepeat.setImageResource(
                         com.google.android.exoplayer2.ui.R.drawable.exo_controls_repeat_all);
+                queueControlBinding.controlRepeat.setContentDescription(
+                        getString(R.string.repeat_mode_all));
                 break;
         }
 
         final int shuffleAlpha = shuffled ? 255 : 77;
         queueControlBinding.controlShuffle.setImageAlpha(shuffleAlpha);
+        queueControlBinding.controlShuffle.setContentDescription(getString(shuffled
+                ? R.string.shuffle_on
+                : R.string.shuffle_off));
     }
 
     private void onPlaybackParameterChanged(@Nullable final PlaybackParameters parameters) {

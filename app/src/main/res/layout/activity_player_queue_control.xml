@@ -51,6 +51,7 @@
         android:textColor="@android:color/white"
         android:textSize="22sp"
         android:textStyle="bold"
+        android:importantForAccessibility="no"
         android:visibility="gone"
         tools:ignore="RtlHardcoded"
         tools:text="1:06:29"
@@ -74,6 +75,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="marquee"
             android:fadingEdge="horizontal"
+            android:importantForAccessibility="no"
             android:marqueeRepeatLimit="marquee_forever"
             android:scrollHorizontally="true"
             android:singleLine="true"
@@ -96,6 +98,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
                 android:fadingEdge="horizontal"
+                android:importantForAccessibility="no"
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
                 android:singleLine="true"
@@ -116,7 +119,6 @@
                 tools:visibility="visible" />
 
         </LinearLayout>
-
     </LinearLayout>
 
     <LinearLayout
@@ -133,6 +135,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:importantForAccessibility="no"
             android:minHeight="40dp"
             android:text="-:--:--"
             android:textColor="?attr/colorAccent"
@@ -140,7 +143,7 @@
             tools:text="1:06:29" />
 
 
-        <androidx.appcompat.widget.AppCompatSeekBar
+        <org.schabi.newpipe.views.FocusAwareSeekBar
             android:id="@+id/seek_bar"
             style="@style/Widget.AppCompat.SeekBar"
             android:layout_width="0dp"
@@ -158,6 +161,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:importantForAccessibility="no"
             android:text="-:--:--"
             android:textColor="?attr/colorAccent"
             tools:ignore="HardcodedText"
@@ -200,7 +204,7 @@
             android:scaleType="fitXY"
             android:src="@drawable/ic_repeat"
             app:tint="?attr/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="@string/notification_action_repeat" />
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/control_backward"
@@ -215,7 +219,7 @@
             android:scaleType="fitCenter"
             android:src="@drawable/ic_previous"
             android:tint="?attr/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="@string/previous_stream" />
 
         <ImageButton
             android:id="@+id/control_fast_rewind"
@@ -229,6 +233,7 @@
             android:focusable="true"
             android:scaleType="fitCenter"
             android:src="@drawable/exo_controls_rewind"
+            android:contentDescription="@string/rewind"
             app:tint="?attr/colorAccent" />
 
         <ImageButton
@@ -244,8 +249,8 @@
             android:focusable="true"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_pause"
-            app:tint="?attr/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="@string/pause"
+            app:tint="?attr/colorAccent" />
 
         <ProgressBar
             android:id="@+id/control_progress_bar"
@@ -260,6 +265,7 @@
             android:background="#00000000"
             android:clickable="false"
             android:indeterminate="true"
+            android:importantForAccessibility="no"
             android:padding="2dp"
             android:scaleType="fitCenter"
             android:tint="?attr/colorAccent"
@@ -279,6 +285,7 @@
             android:focusable="true"
             android:scaleType="fitCenter"
             android:src="@drawable/exo_controls_fastforward"
+            android:contentDescription="@string/forward"
             app:tint="?attr/colorAccent" />
 
         <androidx.appcompat.widget.AppCompatImageButton
@@ -294,7 +301,7 @@
             android:scaleType="fitCenter"
             android:src="@drawable/ic_next"
             android:tint="?attr/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="@string/next_stream" />
 
         <ImageButton
             android:id="@+id/control_shuffle"
@@ -310,7 +317,7 @@
             android:scaleType="fitXY"
             android:src="@drawable/ic_shuffle"
             app:tint="?attr/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="@string/notification_action_shuffle" />
 
     </RelativeLayout>
 </RelativeLayout>
