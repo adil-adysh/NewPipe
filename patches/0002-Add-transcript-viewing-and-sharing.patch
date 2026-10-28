@@ -1,0 +1,584 @@
+From e91e08fd29ba8fff53af7dd0d556f420a8989197 Mon Sep 17 00:00:00 2001
+From: adil shaikh <ah.shaikh97@gmail.com>
+Date: Wed, 28 Oct 2026 15:12:55 +0530
+Subject: [PATCH 2/2] Add transcript viewing and sharing
+
+---
+ app/src/main/AndroidManifest.xml              |   4 +
+ .../org/schabi/newpipe/RouterActivity.java    |  15 +-
+ .../newpipe/player/ui/VideoPlayerUi.java      |  18 +-
+ .../transcript/TranscriptActivity.java        | 198 ++++++++++++++++++
+ .../newpipe/transcript/TranscriptParser.java  |  98 +++++++++
+ app/src/main/res/layout/player.xml            |  14 ++
+ app/src/main/res/values/settings_keys.xml     |   5 +-
+ app/src/main/res/values/strings.xml           |   7 +
+ .../transcript/TranscriptParserTest.java      |  49 +++++
+ 9 files changed, 404 insertions(+), 4 deletions(-)
+ create mode 100644 app/src/main/java/org/schabi/newpipe/transcript/TranscriptActivity.java
+ create mode 100644 app/src/main/java/org/schabi/newpipe/transcript/TranscriptParser.java
+ create mode 100644 app/src/test/java/org/schabi/newpipe/transcript/TranscriptParserTest.java
+
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 7db343959..31f3b026d 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -39,6 +39,10 @@
+         android:theme="@style/OpeningTheme"
+         android:memtagMode="async"
+         tools:ignore="AllowBackup">
++        <activity
++            android:name=".transcript.TranscriptActivity"
++            android:exported="false" />
++
+         <activity
+             android:name=".MainActivity"
+             android:exported="true"
+diff --git a/app/src/main/java/org/schabi/newpipe/RouterActivity.java b/app/src/main/java/org/schabi/newpipe/RouterActivity.java
+index 2997f937f..89be6d8a7 100644
+--- a/app/src/main/java/org/schabi/newpipe/RouterActivity.java
++++ b/app/src/main/java/org/schabi/newpipe/RouterActivity.java
+@@ -70,6 +70,7 @@ import org.schabi.newpipe.player.playqueue.ChannelTabPlayQueue;
+ import org.schabi.newpipe.player.playqueue.PlayQueue;
+ import org.schabi.newpipe.player.playqueue.PlaylistPlayQueue;
+ import org.schabi.newpipe.player.playqueue.SinglePlayQueue;
++import org.schabi.newpipe.transcript.TranscriptActivity;
+ import org.schabi.newpipe.util.ChannelTabHelper;
+ import org.schabi.newpipe.util.Constants;
+ import org.schabi.newpipe.util.DeviceUtils;
+@@ -308,7 +309,8 @@ public class RouterActivity extends AppCompatActivity {
+         if (choiceChecker.isAvailableAndSelected(
+                 R.string.show_info_key,
+                 R.string.download_key,
+-                R.string.add_to_playlist_key)) {
++                R.string.add_to_playlist_key,
++                R.string.show_transcript_key)) {
+             handleChoice(choiceChecker.getSelectedChoiceKey());
+             return;
+         }
+@@ -547,6 +549,8 @@ public class RouterActivity extends AppCompatActivity {
+             }
+ 
+             if (linkType == LinkType.STREAM) {
++                returnedItems.add(new AdapterChoiceItem(getString(R.string.show_transcript_key),
++                        getString(R.string.show_transcript), R.drawable.ic_info_outline));
+                 // download is redundant for linkType CHANNEL AND PLAYLIST
+                 // (till playlist downloading is not supported )
+                 returnedItems.add(new AdapterChoiceItem(getString(R.string.download_key),
+@@ -622,6 +626,15 @@ public class RouterActivity extends AppCompatActivity {
+             return;
+         }
+ 
++        if (selectedChoiceKey.equals(getString(R.string.show_transcript_key))) {
++            final Intent intent = new Intent(this, TranscriptActivity.class);
++            intent.putExtra(TranscriptActivity.EXTRA_SERVICE_ID, currentServiceId);
++            intent.putExtra(TranscriptActivity.EXTRA_URL, currentUrl);
++            startActivity(intent);
++            finish();
++            return;
++        }
++
+         if (selectedChoiceKey.equals(getString(R.string.download_key))) {
+             if (PermissionHelper.checkStoragePermissions(this,
+                     PermissionHelper.DOWNLOAD_DIALOG_REQUEST_CODE)) {
+diff --git a/app/src/main/java/org/schabi/newpipe/player/ui/VideoPlayerUi.java b/app/src/main/java/org/schabi/newpipe/player/ui/VideoPlayerUi.java
+index fa4b494aa..7ecb464d4 100644
+--- a/app/src/main/java/org/schabi/newpipe/player/ui/VideoPlayerUi.java
++++ b/app/src/main/java/org/schabi/newpipe/player/ui/VideoPlayerUi.java
+@@ -84,6 +84,7 @@ import org.schabi.newpipe.player.playqueue.PlayQueue;
+ import org.schabi.newpipe.player.playqueue.PlayQueueItem;
+ import org.schabi.newpipe.player.seekbarpreview.SeekbarPreviewThumbnailHelper;
+ import org.schabi.newpipe.player.seekbarpreview.SeekbarPreviewThumbnailHolder;
++import org.schabi.newpipe.transcript.TranscriptActivity;
+ import org.schabi.newpipe.util.DeviceUtils;
+ import org.schabi.newpipe.util.Localization;
+ import org.schabi.newpipe.util.NavigationHelper;
+@@ -236,6 +237,16 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
+         binding.playPreviousButton.setOnClickListener(makeOnClickListener(player::playPrevious));
+         binding.playNextButton.setOnClickListener(makeOnClickListener(player::playNext));
+ 
++        binding.showTranscript.setOnClickListener(makeOnClickListener(() -> {
++            final PlayQueueItem currentItem = player.getCurrentItem();
++            if (currentItem != null) {
++                final Intent intent = new Intent(context, TranscriptActivity.class)
++                        .putExtra(TranscriptActivity.EXTRA_SERVICE_ID, currentItem.getServiceId())
++                        .putExtra(TranscriptActivity.EXTRA_URL, currentItem.getUrl())
++                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
++                context.startActivity(intent);
++            }
++        }));
+         binding.moreOptionsButton.setOnClickListener(
+                 makeOnClickListener(this::onMoreOptionsClicked));
+         binding.share.setOnClickListener(makeOnClickListener(() -> {
+@@ -315,6 +326,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
+         binding.playPreviousButton.setOnClickListener(null);
+         binding.playNextButton.setOnClickListener(null);
+ 
++        binding.showTranscript.setOnClickListener(null);
+         binding.moreOptionsButton.setOnClickListener(null);
+         binding.moreOptionsButton.setOnLongClickListener(null);
+         binding.share.setOnClickListener(null);
+@@ -764,7 +776,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
+         // qualityTextView → playbackSpeed → audioTrackTextView →
+         // captionTextView → resizeTextView → switchMute →
+         // share → openInBrowser → playWithKodi →
+-        // queueButton → segmentsButton → moreOptionsButton → playerCloseButton
++        // queueButton → segmentsButton → showTranscript → moreOptionsButton → playerCloseButton
+         binding.playPauseButton.setAccessibilityTraversalAfter(
+                 binding.metadataView.getId());
+         binding.playPreviousButton.setAccessibilityTraversalAfter(
+@@ -799,8 +811,10 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
+                 binding.playWithKodi.getId());
+         binding.segmentsButton.setAccessibilityTraversalAfter(
+                 binding.queueButton.getId());
+-        binding.moreOptionsButton.setAccessibilityTraversalAfter(
++        binding.showTranscript.setAccessibilityTraversalAfter(
+                 binding.segmentsButton.getId());
++        binding.moreOptionsButton.setAccessibilityTraversalAfter(
++                binding.showTranscript.getId());
+         binding.playerCloseButton.setAccessibilityTraversalAfter(
+                 binding.moreOptionsButton.getId());
+     }
+diff --git a/app/src/main/java/org/schabi/newpipe/transcript/TranscriptActivity.java b/app/src/main/java/org/schabi/newpipe/transcript/TranscriptActivity.java
+new file mode 100644
+index 000000000..0f7b19ca6
+--- /dev/null
++++ b/app/src/main/java/org/schabi/newpipe/transcript/TranscriptActivity.java
+@@ -0,0 +1,198 @@
++package org.schabi.newpipe.transcript;
++
++import android.os.Bundle;
++import android.view.View;
++import android.widget.Button;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import androidx.annotation.Nullable;
++import androidx.appcompat.app.AppCompatActivity;
++
++import org.schabi.newpipe.DownloaderImpl;
++import org.schabi.newpipe.R;
++import org.schabi.newpipe.extractor.MediaFormat;
++import org.schabi.newpipe.extractor.stream.SubtitlesStream;
++import org.schabi.newpipe.player.helper.PlayerHelper;
++import org.schabi.newpipe.util.ExtractorHelper;
++import org.schabi.newpipe.util.ThemeHelper;
++import org.schabi.newpipe.util.external_communication.ShareUtils;
++
++import java.util.List;
++
++import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
++import io.reactivex.rxjava3.core.Single;
++import io.reactivex.rxjava3.disposables.CompositeDisposable;
++import io.reactivex.rxjava3.schedulers.Schedulers;
++
++import static org.schabi.newpipe.extractor.stream.DeliveryMethod.PROGRESSIVE_HTTP;
++
++/** Displays and shares a transcript for a video received from another app. */
++public class TranscriptActivity extends AppCompatActivity {
++    public static final String EXTRA_SERVICE_ID = "service_id";
++    public static final String EXTRA_URL = "url";
++    private static final String STATE_TRACK_URL = "track_url";
++    private static final String STATE_FORMAT = "track_format";
++    private static final String STATE_TITLE = "video_title";
++    private static final String STATE_AUTO = "track_auto";
++
++    private final CompositeDisposable disposables = new CompositeDisposable();
++    private LinearLayout content;
++    private TextView status;
++    private Button shareButton;
++    private Button changeButton;
++    private Button retryButton;
++    private String trackUrl;
++    private String trackFormat;
++    private boolean autoGenerated;
++    private String videoTitle = "";
++    private String transcript;
++
++    @Override
++    protected void onCreate(@Nullable final Bundle savedInstanceState) {
++        ThemeHelper.setTheme(this);
++        super.onCreate(savedInstanceState);
++        setTitle(R.string.show_transcript);
++        if (savedInstanceState != null) {
++            trackUrl = savedInstanceState.getString(STATE_TRACK_URL);
++            trackFormat = savedInstanceState.getString(STATE_FORMAT);
++            autoGenerated = savedInstanceState.getBoolean(STATE_AUTO);
++            videoTitle = savedInstanceState.getString(STATE_TITLE, "");
++        }
++        createView();
++        if (trackUrl == null || trackFormat == null) {
++            loadTracks();
++        } else {
++            loadTranscript();
++        }
++    }
++
++    private void createView() {
++        final int padding = (int) (16 * getResources().getDisplayMetrics().density);
++        final LinearLayout root = new LinearLayout(this);
++        root.setOrientation(LinearLayout.VERTICAL);
++        root.setPadding(padding, padding, padding, padding);
++        status = new TextView(this);
++        root.addView(status);
++        final ScrollView scroll = new ScrollView(this);
++        content = new LinearLayout(this);
++        content.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(content);
++        root.addView(scroll, new LinearLayout.LayoutParams(
++                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
++        shareButton = new Button(this);
++        shareButton.setText(R.string.share);
++        shareButton.setOnClickListener(v -> ShareUtils.shareText(this, videoTitle, transcript));
++        root.addView(shareButton);
++        changeButton = new Button(this);
++        changeButton.setText(R.string.transcript_change_track);
++        changeButton.setOnClickListener(v -> {
++            trackUrl = null;
++            trackFormat = null;
++            loadTracks();
++        });
++        root.addView(changeButton);
++        retryButton = new Button(this);
++        retryButton.setText(R.string.transcript_retry);
++        retryButton.setOnClickListener(v -> {
++            if (trackUrl == null) {
++                loadTracks();
++            } else {
++                loadTranscript();
++            }
++        });
++        root.addView(retryButton);
++        setContentView(root);
++    }
++
++    private void showLoading() {
++        content.removeAllViews();
++        status.setText(R.string.transcript_loading);
++        shareButton.setVisibility(View.GONE);
++        changeButton.setVisibility(View.GONE);
++        retryButton.setVisibility(View.GONE);
++    }
++
++    private void loadTracks() {
++        showLoading();
++        final int serviceId = getIntent().getIntExtra(EXTRA_SERVICE_ID, -1);
++        final String url = getIntent().getStringExtra(EXTRA_URL);
++        disposables.add(ExtractorHelper.getStreamInfo(serviceId, url, false)
++                .subscribeOn(Schedulers.io())
++                .observeOn(AndroidSchedulers.mainThread())
++                .subscribe(info -> {
++                    videoTitle = info.getName();
++                    showTracks(info.getSubtitles());
++                }, error -> showError()));
++    }
++
++    private void showTracks(@Nullable final List<SubtitlesStream> tracks) {
++        content.removeAllViews();
++        int count = 0;
++        if (tracks != null) {
++            for (final SubtitlesStream track : tracks) {
++                final MediaFormat format = track.getFormat();
++                if (!track.isUrl() || track.getDeliveryMethod() != PROGRESSIVE_HTTP
++                        || (format != MediaFormat.SRT && format != MediaFormat.VTT
++                        && format != MediaFormat.TTML)) {
++                    continue;
++                }
++                final Button button = new Button(this);
++                button.setText(PlayerHelper.captionLanguageOf(this, track));
++                button.setOnClickListener(v -> {
++                    trackUrl = track.getContent();
++                    trackFormat = format.getSuffix();
++                    autoGenerated = track.isAutoGenerated();
++                    loadTranscript();
++                });
++                content.addView(button);
++                count++;
++            }
++        }
++        status.setText(count == 0 ? R.string.transcript_no_subtitles
++                : R.string.transcript_choose_track);
++    }
++
++    private void loadTranscript() {
++        showLoading();
++        final String url = trackUrl;
++        final String format = trackFormat;
++        disposables.add(Single.fromCallable(() -> TranscriptParser.parse(format,
++                        DownloaderImpl.getInstance().get(url).ensureSuccessResponseCode()
++                                .responseBody(), autoGenerated))
++                .subscribeOn(Schedulers.io())
++                .observeOn(AndroidSchedulers.mainThread())
++                .subscribe(result -> {
++                    transcript = result;
++                    status.setText("");
++                    final TextView text = new TextView(this);
++                    text.setTextIsSelectable(true);
++                    text.setText(result);
++                    content.addView(text);
++                    shareButton.setVisibility(View.VISIBLE);
++                    changeButton.setVisibility(View.VISIBLE);
++                }, error -> showError()));
++    }
++
++    private void showError() {
++        status.setText(R.string.transcript_error);
++        retryButton.setVisibility(View.VISIBLE);
++        changeButton.setVisibility(trackUrl == null ? View.GONE : View.VISIBLE);
++    }
++
++    @Override
++    protected void onSaveInstanceState(final Bundle outState) {
++        outState.putString(STATE_TRACK_URL, trackUrl);
++        outState.putString(STATE_FORMAT, trackFormat);
++        outState.putBoolean(STATE_AUTO, autoGenerated);
++        outState.putString(STATE_TITLE, videoTitle);
++        super.onSaveInstanceState(outState);
++    }
++
++    @Override
++    protected void onDestroy() {
++        disposables.clear();
++        super.onDestroy();
++    }
++}
+diff --git a/app/src/main/java/org/schabi/newpipe/transcript/TranscriptParser.java b/app/src/main/java/org/schabi/newpipe/transcript/TranscriptParser.java
+new file mode 100644
+index 000000000..b4d69b717
+--- /dev/null
++++ b/app/src/main/java/org/schabi/newpipe/transcript/TranscriptParser.java
+@@ -0,0 +1,98 @@
++package org.schabi.newpipe.transcript;
++
++import org.jsoup.Jsoup;
++import org.jsoup.nodes.Element;
++import org.jsoup.nodes.Node;
++import org.jsoup.nodes.TextNode;
++import org.jsoup.parser.Parser;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
++
++/** Converts subtitle cues to readable transcript text. */
++public final class TranscriptParser {
++    private TranscriptParser() { }
++
++    public static String parse(final String format, final String source) {
++        return parse(format, source, false);
++    }
++
++    public static String parse(final String format, final String source,
++                               final boolean autoGenerated) {
++        final List<String> cues = new ArrayList<>();
++        if ("ttml".equals(format.toLowerCase(Locale.ROOT))) {
++            final Element root = Jsoup.parse(source, "", Parser.xmlParser());
++            for (final Element paragraph : root.select("p")) {
++                final StringBuilder text = new StringBuilder();
++                appendXmlText(paragraph, text);
++                addCue(cues, text.toString(), autoGenerated);
++            }
++        } else if ("srt".equalsIgnoreCase(format) || "vtt".equalsIgnoreCase(format)) {
++            final String normalized = source.replace("\r\n", "\n").replace('\r', '\n');
++            for (final String block : normalized.split("\\n\\s*\\n")) {
++                final String[] lines = block.split("\n");
++                int timing = -1;
++                for (int i = 0; i < lines.length; i++) {
++                    if (lines[i].contains("-->")) {
++                        timing = i;
++                        break;
++                    }
++                }
++                if (timing < 0) {
++                    continue;
++                }
++                final StringBuilder text = new StringBuilder();
++                for (int i = timing + 1; i < lines.length; i++) {
++                    if (text.length() > 0) {
++                        text.append('\n');
++                    }
++                    text.append(Jsoup.parse(lines[i].replaceAll(
++                            "<\\d{2}:\\d{2}(?::\\d{2})?\\.\\d{3}>", "")).text());
++                }
++                addCue(cues, text.toString(), autoGenerated);
++            }
++        } else {
++            throw new IllegalArgumentException("Unsupported subtitle format");
++        }
++        if (cues.isEmpty()) {
++            throw new IllegalArgumentException("No subtitle text");
++        }
++        return String.join("\n", cues);
++    }
++
++    private static void appendXmlText(final Node node, final StringBuilder text) {
++        if (node instanceof TextNode) {
++            text.append(((TextNode) node).getWholeText());
++        } else if (node instanceof Element && "br".equalsIgnoreCase(((Element) node).tagName())) {
++            text.append('\n');
++        }
++        for (final Node child : node.childNodes()) {
++            appendXmlText(child, text);
++        }
++    }
++
++    private static void addCue(final List<String> cues, final String rawText,
++                               final boolean autoGenerated) {
++        final String text = rawText.replace('\u00a0', ' ').trim();
++        if (text.isEmpty()) {
++            return;
++        }
++        if (autoGenerated && !cues.isEmpty()) {
++            final int last = cues.size() - 1;
++            final String previous = cues.get(last);
++            final int maxOverlap = Math.min(previous.length(), text.length());
++            for (int length = maxOverlap; length > 0; length--) {
++                final int start = previous.length() - length;
++                if ((start == 0 || Character.isWhitespace(previous.charAt(start - 1)))
++                        && (length == text.length()
++                        || Character.isWhitespace(text.charAt(length)))
++                        && previous.regionMatches(start, text, 0, length)) {
++                    cues.set(last, previous + text.substring(length));
++                    return;
++                }
++            }
++        }
++        cues.add(text);
++    }
++}
+diff --git a/app/src/main/res/layout/player.xml b/app/src/main/res/layout/player.xml
+index c319e2b02..cfbc0804a 100644
+--- a/app/src/main/res/layout/player.xml
++++ b/app/src/main/res/layout/player.xml
+@@ -268,6 +268,20 @@
+                         app:tint="@color/white"
+                         tools:ignore="RtlHardcoded" />
+ 
++                    <androidx.appcompat.widget.AppCompatImageButton
++                        android:id="@+id/showTranscript"
++                        android:layout_width="35dp"
++                        android:layout_height="35dp"
++                        android:layout_marginEnd="8dp"
++                        android:background="?attr/selectableItemBackgroundBorderless"
++                        android:clickable="true"
++                        android:contentDescription="@string/show_transcript"
++                        android:focusable="true"
++                        android:padding="@dimen/player_main_buttons_padding"
++                        android:scaleType="fitCenter"
++                        android:src="@drawable/ic_description"
++                        app:tint="@color/white" />
++
+                     <androidx.appcompat.widget.AppCompatImageButton
+                         android:id="@+id/moreOptionsButton"
+                         android:layout_width="wrap_content"
+diff --git a/app/src/main/res/values/settings_keys.xml b/app/src/main/res/values/settings_keys.xml
+index 20bec14cb..98373a464 100644
+--- a/app/src/main/res/values/settings_keys.xml
++++ b/app/src/main/res/values/settings_keys.xml
+@@ -507,6 +507,7 @@
+     <string name="preferred_open_action_default">@string/always_ask_open_action_key</string>
+     <string name="preferred_open_action_last_selected_key">preferred_open_action_last_selected</string>
+ 
++    <string name="show_transcript_key">show_transcript</string>
+     <string name="show_info_key">show_info</string>
+     <string name="video_player_key">video_player</string>
+     <string name="background_player_key">background_player</string>
+@@ -518,6 +519,7 @@
+ 
+     <string-array name="preferred_open_action_description_list">
+         <item>@string/show_info</item>
++        <item>@string/show_transcript</item>
+         <item>@string/video_player</item>
+         <item>@string/background_player</item>
+         <item>@string/popup_player</item>
+@@ -528,13 +530,14 @@
+     </string-array>
+     <string-array name="preferred_open_action_values_list">
+         <item>@string/show_info_key</item>
++        <item>@string/show_transcript_key</item>
+         <item>@string/video_player_key</item>
+         <item>@string/background_player_key</item>
+         <item>@string/popup_player_key</item>
+         <item>@string/download_key</item>
+         <item>@string/add_to_playlist_key</item>
+-        <item>@string/always_ask_open_action_key</item>
+         <item>@string/enqueue_key</item>
++        <item>@string/always_ask_open_action_key</item>
+     </string-array>
+ 
+     <!-- Updates -->
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 9c87e1199..2b5752a62 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -1,5 +1,12 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
++    <string name="show_transcript">Show transcript</string>
++    <string name="transcript_choose_track">Choose a subtitle track</string>
++    <string name="transcript_loading">Loading transcript…</string>
++    <string name="transcript_no_subtitles">No supported subtitles are available for this video.</string>
++    <string name="transcript_error">Could not load the transcript. Please try again.</string>
++    <string name="transcript_change_track">Choose another track</string>
++    <string name="transcript_retry">Retry</string>
+     <string name="main_bg_subtitle">Tap the magnifying glass to get started.</string>
+     <string name="upload_date_text">Published on %1$s</string>
+     <string name="no_player_found">No stream player found. Install VLC?</string>
+diff --git a/app/src/test/java/org/schabi/newpipe/transcript/TranscriptParserTest.java b/app/src/test/java/org/schabi/newpipe/transcript/TranscriptParserTest.java
+new file mode 100644
+index 000000000..fba673ce1
+--- /dev/null
++++ b/app/src/test/java/org/schabi/newpipe/transcript/TranscriptParserTest.java
+@@ -0,0 +1,49 @@
++package org.schabi.newpipe.transcript;
++
++import org.junit.Test;
++
++import static org.junit.Assert.assertEquals;
++
++public class TranscriptParserTest {
++    @Test
++    public void convertsSrtToText() {
++        assertEquals("Hello & welcome\nNext line", TranscriptParser.parse("srt",
++                "1\n00:00:01,000 --> 00:00:02,000\n<i>Hello &amp; welcome</i>\n\n"
++                + "2\n00:00:03,000 --> 00:00:04,000\nNext line\n"));
++    }
++
++    @Test
++    public void convertsWebVttAndAvoidsRepeatedCues() {
++        assertEquals("Hello world\nAgain", TranscriptParser.parse("vtt",
++                "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<c>Hello world</c>\n\n"
++                + "00:00:02.000 --> 00:00:03.000\nHello world\n\n"
++                + "00:00:04.000 --> 00:00:05.000\nAgain\n", true));
++    }
++
++    @Test
++    public void convertsTtmlParagraphsAndLineBreaks() {
++        assertEquals("Hello & welcome\nNext line", TranscriptParser.parse("ttml",
++                "<tt><body><div><p begin=\"1s\">Hello &amp; <span>welcome</span>"
++                + "<br/>Next line</p></div></body></tt>"));
++    }
++    @Test
++    public void mergesRollingAutomaticCaptions() {
++        assertEquals("Hello world again", TranscriptParser.parse("vtt",
++                "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello\n\n"
++                + "00:00:02.000 --> 00:00:03.000\nHello world\n\n"
++                + "00:00:03.000 --> 00:00:04.000\nworld again\n", true));
++    }
++    @Test
++    public void preservesRepeatedManualCaptions() {
++        assertEquals("Yes\nYes", TranscriptParser.parse("srt",
++                "1\n00:00:01,000 --> 00:00:02,000\nYes\n\n"
++                + "2\n00:00:03,000 --> 00:00:04,000\nYes\n"));
++    }
++
++    @Test
++    public void removesInlineVttTimestamps() {
++        assertEquals("Hello world", TranscriptParser.parse("vtt",
++                "WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n"
++                + "Hello <00:00:02.000>world\n"));
++    }
++}
+-- 
+2.55.0.windows.3
+
