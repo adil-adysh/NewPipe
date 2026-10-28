@@ -1,4 +1,4 @@
-name: Propose upstream sync
+name: Apply patches to new upstream tags
 
 on:
   workflow_dispatch:
@@ -7,7 +7,10 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+
+concurrency:
+  group: upstream-tag-patches
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -18,28 +21,7 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Merge upstream into a sync branch
-        id: sync
+      - name: Check upstream tags and apply patches to new ones
         run: |
           git remote add upstream https://github.com/TeamNewPipe/NewPipe.git
-          git fetch upstream dev
-          if git merge-base --is-ancestor upstream/dev HEAD; then
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git checkout -B automation/sync-upstream
-          git merge --no-edit upstream/dev
-          git push --force-with-lease origin automation/sync-upstream
-          echo 'changed=true' >> "$GITHUB_OUTPUT"
-      - name: Open a pull request
-        if: steps.sync.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ -z "$(gh pr list --head automation/sync-upstream --base dev --state open --json number --jq '.[0].number // empty')" ]; then
-            gh pr create --base dev --head automation/sync-upstream \
-              --title 'Sync upstream dev' \
-              --body 'Merge the latest upstream dev into the fork. Review the changes and checks before merging.'
-          fi
+          bash .github/scripts/apply-upstream-tags.sh
