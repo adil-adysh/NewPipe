@@ -507,6 +507,7 @@
     <string name="preferred_open_action_default">@string/always_ask_open_action_key</string>
     <string name="preferred_open_action_last_selected_key">preferred_open_action_last_selected</string>
 
+    <string name="show_transcript_key">show_transcript</string>
     <string name="show_info_key">show_info</string>
     <string name="video_player_key">video_player</string>
     <string name="background_player_key">background_player</string>
@@ -518,6 +519,7 @@
 
     <string-array name="preferred_open_action_description_list">
         <item>@string/show_info</item>
+        <item>@string/show_transcript</item>
         <item>@string/video_player</item>
         <item>@string/background_player</item>
         <item>@string/popup_player</item>
@@ -528,13 +530,14 @@
     </string-array>
     <string-array name="preferred_open_action_values_list">
         <item>@string/show_info_key</item>
+        <item>@string/show_transcript_key</item>
         <item>@string/video_player_key</item>
         <item>@string/background_player_key</item>
         <item>@string/popup_player_key</item>
         <item>@string/download_key</item>
         <item>@string/add_to_playlist_key</item>
-        <item>@string/always_ask_open_action_key</item>
         <item>@string/enqueue_key</item>
+        <item>@string/always_ask_open_action_key</item>
     </string-array>
 
     <!-- Updates -->
