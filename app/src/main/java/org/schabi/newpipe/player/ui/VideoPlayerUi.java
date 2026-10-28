@@ -84,6 +84,7 @@ import org.schabi.newpipe.player.playqueue.PlayQueue;
 import org.schabi.newpipe.player.playqueue.PlayQueueItem;
 import org.schabi.newpipe.player.seekbarpreview.SeekbarPreviewThumbnailHelper;
 import org.schabi.newpipe.player.seekbarpreview.SeekbarPreviewThumbnailHolder;
+import org.schabi.newpipe.transcript.TranscriptActivity;
 import org.schabi.newpipe.util.DeviceUtils;
 import org.schabi.newpipe.util.Localization;
 import org.schabi.newpipe.util.NavigationHelper;
@@ -236,6 +237,16 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         binding.playPreviousButton.setOnClickListener(makeOnClickListener(player::playPrevious));
         binding.playNextButton.setOnClickListener(makeOnClickListener(player::playNext));
 
+        binding.showTranscript.setOnClickListener(makeOnClickListener(() -> {
+            final PlayQueueItem currentItem = player.getCurrentItem();
+            if (currentItem != null) {
+                final Intent intent = new Intent(context, TranscriptActivity.class)
+                        .putExtra(TranscriptActivity.EXTRA_SERVICE_ID, currentItem.getServiceId())
+                        .putExtra(TranscriptActivity.EXTRA_URL, currentItem.getUrl())
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        }));
         binding.moreOptionsButton.setOnClickListener(
                 makeOnClickListener(this::onMoreOptionsClicked));
         binding.share.setOnClickListener(makeOnClickListener(() -> {
@@ -315,6 +326,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         binding.playPreviousButton.setOnClickListener(null);
         binding.playNextButton.setOnClickListener(null);
 
+        binding.showTranscript.setOnClickListener(null);
         binding.moreOptionsButton.setOnClickListener(null);
         binding.moreOptionsButton.setOnLongClickListener(null);
         binding.share.setOnClickListener(null);
@@ -764,7 +776,7 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
         // qualityTextView → playbackSpeed → audioTrackTextView →
         // captionTextView → resizeTextView → switchMute →
         // share → openInBrowser → playWithKodi →
-        // queueButton → segmentsButton → moreOptionsButton → playerCloseButton
+        // queueButton → segmentsButton → showTranscript → moreOptionsButton → playerCloseButton
         binding.playPauseButton.setAccessibilityTraversalAfter(
                 binding.metadataView.getId());
         binding.playPreviousButton.setAccessibilityTraversalAfter(
@@ -799,8 +811,10 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
                 binding.playWithKodi.getId());
         binding.segmentsButton.setAccessibilityTraversalAfter(
                 binding.queueButton.getId());
-        binding.moreOptionsButton.setAccessibilityTraversalAfter(
+        binding.showTranscript.setAccessibilityTraversalAfter(
                 binding.segmentsButton.getId());
+        binding.moreOptionsButton.setAccessibilityTraversalAfter(
+                binding.showTranscript.getId());
         binding.playerCloseButton.setAccessibilityTraversalAfter(
                 binding.moreOptionsButton.getId());
     }
