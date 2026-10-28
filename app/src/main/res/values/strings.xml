@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="show_transcript">Show transcript</string>
+    <string name="transcript_choose_track">Choose a subtitle track</string>
+    <string name="transcript_loading">Loading transcript…</string>
+    <string name="transcript_no_subtitles">No supported subtitles are available for this video.</string>
+    <string name="transcript_error">Could not load the transcript. Please try again.</string>
+    <string name="transcript_change_track">Choose another track</string>
+    <string name="transcript_retry">Retry</string>
     <string name="main_bg_subtitle">Tap the magnifying glass to get started.</string>
     <string name="upload_date_text">Published on %1$s</string>
     <string name="no_player_found">No stream player found. Install VLC?</string>

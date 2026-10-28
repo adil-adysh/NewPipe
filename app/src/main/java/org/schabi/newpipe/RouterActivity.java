@@ -70,6 +70,7 @@ import org.schabi.newpipe.player.playqueue.ChannelTabPlayQueue;
 import org.schabi.newpipe.player.playqueue.PlayQueue;
 import org.schabi.newpipe.player.playqueue.PlaylistPlayQueue;
 import org.schabi.newpipe.player.playqueue.SinglePlayQueue;
+import org.schabi.newpipe.transcript.TranscriptActivity;
 import org.schabi.newpipe.util.ChannelTabHelper;
 import org.schabi.newpipe.util.Constants;
 import org.schabi.newpipe.util.DeviceUtils;
@@ -308,7 +309,8 @@ public class RouterActivity extends AppCompatActivity {
         if (choiceChecker.isAvailableAndSelected(
                 R.string.show_info_key,
                 R.string.download_key,
-                R.string.add_to_playlist_key)) {
+                R.string.add_to_playlist_key,
+                R.string.show_transcript_key)) {
             handleChoice(choiceChecker.getSelectedChoiceKey());
             return;
         }
@@ -547,6 +549,8 @@ public class RouterActivity extends AppCompatActivity {
             }
 
             if (linkType == LinkType.STREAM) {
+                returnedItems.add(new AdapterChoiceItem(getString(R.string.show_transcript_key),
+                        getString(R.string.show_transcript), R.drawable.ic_info_outline));
                 // download is redundant for linkType CHANNEL AND PLAYLIST
                 // (till playlist downloading is not supported )
                 returnedItems.add(new AdapterChoiceItem(getString(R.string.download_key),
@@ -618,6 +622,15 @@ public class RouterActivity extends AppCompatActivity {
 
         if (selectedChoiceKey.equals(getString(R.string.popup_player_key))
                 && !PermissionHelper.isPopupEnabledElseAsk(this)) {
+            finish();
+            return;
+        }
+
+        if (selectedChoiceKey.equals(getString(R.string.show_transcript_key))) {
+            final Intent intent = new Intent(this, TranscriptActivity.class);
+            intent.putExtra(TranscriptActivity.EXTRA_SERVICE_ID, currentServiceId);
+            intent.putExtra(TranscriptActivity.EXTRA_URL, currentUrl);
+            startActivity(intent);
             finish();
             return;
         }
